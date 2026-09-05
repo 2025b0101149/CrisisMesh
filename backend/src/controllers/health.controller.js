@@ -19,7 +19,8 @@ export const checkHealth = (req, res) => {
     environment: config.nodeEnv,
     database: {
       status: dbStatus.state,
-      connected: dbStatus.isConnected
+      connected: dbStatus.isConnected,
+      error: dbStatus.error || undefined
     },
     integrations: {
       geminiAi: Boolean(config.geminiApiKey),

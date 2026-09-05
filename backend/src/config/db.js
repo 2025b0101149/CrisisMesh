@@ -8,23 +8,25 @@ import { config } from './env.js';
  * - If connection fails, logs the error and exits so the operator is not
  *   silently running with no persistent storage.
  */
+let lastConnectionError = null;
+
 export const connectDB = async () => {
   if (!config.mongoUri) {
+    lastConnectionError = 'MONGO_URI is not set in environment';
     console.error('❌ [MongoDB] MONGO_URI is not set in environment variables.');
-    console.error('   Add MONGO_URI to backend/.env and restart the server.');
     return;
   }
 
   try {
     const conn = await mongoose.connect(config.mongoUri, {
-      serverSelectionTimeoutMS: 5000
+      serverSelectionTimeoutMS: 8000
     });
+    lastConnectionError = null;
     console.log('MongoDB connected successfully');
     console.log(`✅ [MongoDB] Connected — host: ${conn.connection.host} / db: ${conn.connection.name}`);
   } catch (error) {
-    // Log ONLY the error message — never the connection string or credentials.
+    lastConnectionError = error.message;
     console.error(`❌ [MongoDB] Connection failed: ${error.message}`);
-    console.error('   Check your MONGO_URI in backend/.env and ensure your Atlas cluster is reachable.');
   }
 };
 
@@ -38,6 +40,7 @@ export const getDBStatus = () => {
   const stateCode = mongoose.connection.readyState;
   return {
     state: readyStates[stateCode] || 'unknown',
-    isConnected: stateCode === 1
+    isConnected: stateCode === 1,
+    error: lastConnectionError
   };
 };
